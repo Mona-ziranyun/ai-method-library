@@ -3,7 +3,7 @@
 收录跑通过的 AI 和工具用法。每个方法写清楚步骤、要准备什么、容易踩的坑，能直接用的就配一个小工具。
 
 - 页面：`index.html`（单文件，浏览器直接打开即可）
-- 在线版（Claude Artifact，私有）：https://claude.ai/artifact/8qTKKk9RtU8sH9yQzMoGSZ
+- 网页：https://mona-ziranyun.github.io/ai-method-library/
 
 ## 已收录
 
