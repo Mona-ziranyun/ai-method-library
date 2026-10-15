@@ -1,0 +1,347 @@
+<title>自然云AI方法库</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* 布局：和镜头库同一套：顶部标题条 + 筛选栏，下面是方法卡片网格，点卡片从右侧滑出详情面板（含可直接用的小工具） */
+:root{
+  --orange:#EA562D; --cream:#F3E7CF; --green:#509140; --yellow:#FED23F; --ink:#2B1A12;
+  --bg:#FAF6EE; --paper:#FFFDF8; --fg:#2B1A12; --muted:#7A6A5E; --line:#E6DCCB; --chip:#F1E8D8;
+  --stage:#F7F5F0; --stage-line:#E4DED2; --shadow:0 1px 2px rgba(43,26,18,.06),0 8px 24px rgba(43,26,18,.06);
+  --overlay:rgba(43,26,18,.38); --ok:#3F7A31; --warnfg:#8A6A00;
+  --f-display:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --f-body:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --f-en:"DM Serif Display",Georgia,"Times New Roman",serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1C1612; --paper:#251D18; --fg:#F3E7CF; --muted:#B5A595; --line:#3A2F27; --chip:#30261F;
+  --stage:#EFEBE3; --stage-line:#D8D1C4; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --overlay:rgba(0,0,0,.55); --ok:#8BCB79; --warnfg:#FED23F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1C1612; --paper:#251D18; --fg:#F3E7CF; --muted:#B5A595; --line:#3A2F27; --chip:#30261F;
+  --stage:#EFEBE3; --stage-line:#D8D1C4; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --overlay:rgba(0,0,0,.55); --ok:#8BCB79; --warnfg:#FED23F; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6;padding:0 16px 64px}
+.wrap{max-width:1180px;margin:0 auto}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:6px}
+
+header.top{display:flex;flex-wrap:wrap;gap:20px 32px;align-items:flex-end;justify-content:space-between;padding-block:40px 24px;border-bottom:1px solid var(--line)}
+.brand{min-width:0}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.eyebrow .en{font-family:var(--f-en);font-style:italic;letter-spacing:0;font-size:15px;color:var(--orange)}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(34px,6vw,54px);line-height:1.1;margin:6px 0 8px;text-wrap:balance;letter-spacing:.02em}
+h1 .mark{color:var(--orange)}
+.sub{color:var(--muted);margin:0;max-width:56ch}
+.stats{display:flex;gap:28px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column}
+.stat b{font-family:var(--f-display);font-weight:900;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:.06em}
+
+.bar{display:flex;flex-direction:column;gap:12px;padding-block:22px 8px}
+.frow{display:flex;gap:12px;align-items:baseline;min-width:0}
+.flabel{flex:none;width:48px;font-size:12px;letter-spacing:.12em;color:var(--muted)}
+.tools-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:12px}
+.count{font-size:13px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 14px;font-size:13.5px;display:inline-flex;gap:6px;align-items:center}
+.chip .n{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip[aria-pressed="true"] .n{color:var(--bg);opacity:.7}
+.search{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 14px;font:inherit;font-size:13.5px;color:var(--fg);width:220px;max-width:100%}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:22px;padding-block:16px 8px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.card .open{all:unset;cursor:pointer;display:flex;flex-direction:column;min-width:0}
+.card .open:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+.meta{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.id{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.name{font-weight:700;font-size:15.5px;line-height:1.35}
+.oneline{font-size:13px;color:var(--muted);line-height:1.5}
+.tags{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+.tag{background:var(--chip);border-radius:6px;padding:1px 8px;color:var(--fg)}
+.tag.plat{background:rgba(234,86,45,.1);color:var(--orange)}
+.pill{font-size:11.5px;border-radius:999px;padding:1px 9px;font-weight:500;white-space:nowrap}
+.st-ok{background:rgba(80,145,64,.14);color:var(--ok)}
+.st-try{background:rgba(254,210,63,.28);color:var(--warnfg)}
+.copies{display:flex;gap:8px;flex-wrap:wrap;margin:0 14px 14px}
+.copy{border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:999px;padding:6px 14px;font-size:13px}
+.copy:hover{border-color:var(--orange);color:var(--orange)}
+.copy.done{background:var(--green);border-color:var(--green);color:#fff}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:48px 0}
+
+/* 卡片预览：一个迷你浏览器，地址栏打出接口链接，下面逐行出字 */
+.stage{position:relative;aspect-ratio:16/9;max-width:100%;background:var(--stage);overflow:hidden;border-bottom:1px solid var(--stage-line);color:#2B1A12;
+  background-image:radial-gradient(rgba(43,26,18,.035) 1px,transparent 1px);background-size:5px 5px;display:flex;align-items:center;justify-content:center}
+.win{width:84%;height:78%;background:#fff;border-radius:9px;box-shadow:0 2px 10px rgba(43,26,18,.1);overflow:hidden;display:flex;flex-direction:column}
+.win .chrome{display:flex;align-items:center;gap:5px;padding:6px 8px;background:#F1ECE2;border-bottom:1px solid #E4DED2}
+.win .chrome i{width:6px;height:6px;border-radius:50%;background:#D8CFC0;flex:none}
+.win .url{flex:1;min-width:0;margin-left:4px;background:#fff;border-radius:999px;padding:2px 8px;font-family:var(--f-mono);font-size:clamp(7px,1.05vw,9px);white-space:nowrap;overflow:hidden;color:#5A4A3E;position:relative}
+.win .url span{display:inline-block;overflow:hidden;vertical-align:bottom;max-width:0;animation:type 4.8s steps(40,end) infinite}
+.win .url b{color:var(--orange);font-weight:500}
+.win .body{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-family:var(--f-mono);font-size:clamp(7px,1.05vw,9px);color:#5A4A3E}
+.win .body p{margin:0;opacity:0;animation:line 4.8s infinite;white-space:nowrap;overflow:hidden}
+.win .body p em{font-style:normal;color:#3F7A31}
+.win .body p:nth-child(2){animation-delay:.15s}.win .body p:nth-child(3){animation-delay:.3s}.win .body p:nth-child(4){animation-delay:.45s}
+@keyframes type{0%,8%{max-width:0}45%,100%{max-width:100%}}
+@keyframes line{0%,50%{opacity:0;transform:translateY(3px)}58%,92%{opacity:1;transform:none}100%{opacity:0}}
+.paused .win .url span{animation:none;max-width:100%}
+.paused .win .body p{animation:none;opacity:1}
+@media (prefers-reduced-motion:reduce){.win .url span{animation:none;max-width:100%}.win .body p{animation:none;opacity:1}}
+
+/* 详情面板 */
+.scrim{position:fixed;inset:0;background:var(--overlay);z-index:20}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(600px,100%);background:var(--paper);z-index:21;overflow-y:auto;box-shadow:-10px 0 40px rgba(0,0,0,.18);padding:calc(20px + env(safe-area-inset-top,0px)) 24px calc(32px + env(safe-area-inset-bottom,0px))}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+.x-btn{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 14px;font-size:13px}
+.panel h2{font-family:var(--f-display);font-weight:900;font-size:26px;line-height:1.25;margin:10px 0 6px;text-wrap:balance}
+.panel .desc{margin:0 0 4px;max-width:60ch}
+.sec{margin-top:24px}
+.sec h3{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500;margin:0 0 10px}
+dl.kv{display:grid;grid-template-columns:88px 1fr;gap:8px 12px;margin:0;font-size:14px}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+code{font-family:var(--f-mono);font-size:12.5px;background:var(--chip);border-radius:5px;padding:1px 6px;overflow-wrap:anywhere}
+ol.how{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:10px}
+ol.how li{counter-increment:s;display:grid;grid-template-columns:24px 1fr;gap:10px;font-size:14.5px;min-width:0}
+ol.how li::before{content:counter(s);width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+ol.how li > div{min-width:0}
+.urlbox{margin-top:8px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;font-family:var(--f-mono);font-size:12.5px;line-height:1.55;overflow-wrap:anywhere}
+.urlbox mark{background:rgba(254,210,63,.45);color:inherit;border-radius:3px;padding:0 2px;outline:1.5px solid var(--orange)}
+.note{font-size:14px;margin:0;padding-left:18px}
+.note li{margin-bottom:4px}
+
+/* 面板里的小工具 */
+.tool{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg);display:flex;flex-direction:column;gap:10px}
+.tool label{font-size:13px;font-weight:500}
+.tool .hint{font-size:12.5px;color:var(--muted);margin:0}
+.inp{width:100%;border:1px solid var(--line);background:var(--paper);color:var(--fg);border-radius:8px;padding:8px 10px;font:inherit;font-size:13.5px}
+textarea.inp{font-family:var(--f-mono);font-size:12px;min-height:96px;resize:vertical}
+.out{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 10px;font-family:var(--f-mono);font-size:12.5px;overflow-wrap:anywhere;min-height:38px}
+.out.txt{font-family:var(--f-body);font-size:14px;white-space:pre-wrap;max-height:260px;overflow:auto}
+.out.err{color:var(--orange)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--fg);background:var(--fg);color:var(--bg);border-radius:999px;padding:5px 14px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn.done{background:var(--green);border-color:var(--green);color:#fff}
+.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
+
+.flow{margin-top:44px;border-top:1px solid var(--line);padding-top:24px}
+.flow h2{font-family:var(--f-display);font-weight:900;font-size:22px;margin:0 0 14px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;counter-increment:s;min-width:0}
+.steps li::before{content:counter(s);display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;font-weight:700;font-size:12px;align-items:center;justify-content:center;margin-bottom:6px}
+.steps b{display:block;margin-bottom:2px}
+.steps span{color:var(--muted)}
+footer{margin-top:28px;font-size:12.5px;color:var(--muted)}
+@media (max-width:520px){.search{width:100%}.frow{flex-direction:column;gap:6px}dl.kv{grid-template-columns:72px 1fr}.panel{padding-inline:16px}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow">自然云聊健康 · 工作方法资产 <span class="en">method library</span></div>
+      <h1>AI 方法<span class="mark">库</span></h1>
+      <p class="sub">收录跑通过的 AI 和工具用法。每个方法写清楚步骤、要准备什么、容易踩的坑，能直接用的就配一个小工具，下次照着做就行。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="bar">
+    <div class="frow"><span class="flabel">用途</span><div class="chips" id="fuse" role="group" aria-label="按用途筛选"></div></div>
+    <div class="frow"><span class="flabel">平台</span><div class="chips" id="fplat" role="group" aria-label="按平台筛选"></div></div>
+    <div class="tools-row"><span class="count" id="count"></span>
+      <input id="q" class="search" type="search" placeholder="搜方法名、平台、关键词" aria-label="搜索方法">
+    </div>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <section class="flow">
+    <h2>方法入库流程</h2>
+    <ol class="steps">
+      <li><b>遇到好用的做法</b><span>和 Claude 聊出来的、自己摸索的、别人教的都算</span></li>
+      <li><b>实际跑一遍</b><span>用真实账号和数据走通，记下要准备什么</span></li>
+      <li><b>写成步骤</b><span>每一步写到不用再问人也能照做</span></li>
+      <li><b>配小工具</b><span>能省手工的，就在详情里做一个生成器或整理器</span></li>
+      <li><b>入库并登记</b><span>更新这一页，写明验证日期和踩过的坑</span></li>
+    </ol>
+  </section>
+  <footer>状态说明：已验证 = 实际跑通过；试用中 = 能用但还在调整</footer>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="panel" id="panel" hidden role="dialog" aria-modal="true" aria-labelledby="pTitle"></aside>
+
+<script>
+const USES=["拿逐字稿","找选题","写脚本","剪辑","数据分析"];
+const PLATS=["巨量星图","抖音","剪映","Claude"];
+const ST={ok:["已验证","st-ok"],try:["试用中","st-try"]};
+const XT_API="https://www.xingtu.cn/gw/api/aggregator/get_item_high_quality_text?item_id=";
+
+const METHODS=[
+ {id:"M-001",name:"用星图接口直接拿视频逐字稿",use:["拿逐字稿","找选题"],plat:["巨量星图","抖音"],status:"ok",
+  oneline:"登录星图后，在地址栏打开一个接口链接，就能看到这条抖音视频的整段文字稿。",
+  cost:"每条约 30 秒",need:"能登录巨量星图（xingtu.cn）的账号；要查的抖音视频 ID",
+  verified:"2026-10 在浏览器里实际打开过，能正常出字",
+  desc:"做竞品拆解、选题入库时，需要把别人视频的口播转成文字。星图后台有一个接口，直接返回视频的逐字稿，不用下载视频，也不用再跑语音转写。",
+  how:[
+   "先在这个浏览器里登录星图，打开 xingtu.cn 能看到自己的账号就行。",
+   "新开一个标签页，在地址栏粘贴下面这个链接，把最后那串数字换成要查的视频 ID：",
+   "按回车，页面上会直接显示一串文字。每个 <code>\"text\":\"……\"</code> 里面就是一句逐字稿。",
+   "如果显示 <code>\"texts\":[]</code>，说明星图没有这条视频的文字稿。"
+  ],
+  example:"7662336362532304484",
+  notes:[
+   "视频 ID 就是抖音链接里 /video/ 后面那串 19 位数字，下面的生成器可以直接粘整条抖音链接",
+   "必须在已登录星图的同一个浏览器里打开，没登录会报错或拿不到数据",
+   "页面显示的是带格式符号的原始数据，读起来乱，复制下来用下面的整理器转成干净文字",
+   "要一次处理几十条（比如批量写进飞书表格），交给 Claude 批量跑更省事，不用一条条手动开"
+  ],
+  src:"和 Claude 一起摸索出来的（做选题入库表时）",tool:"xingtu"}
+];
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const state={use:null,plat:null,q:""};
+
+function preview(m){
+  return `<div class="stage" aria-hidden="true"><div class="win"><div class="chrome"><i></i><i></i><i></i><div class="url"><span>xingtu.cn/…/get_item_high_quality_text?item_id=<b>${m.example}</b></span></div></div>
+    <div class="body"><p>{"texts":[</p><p>&nbsp;{"text":"<em>今天聊聊熬夜之后…</em>"},</p><p>&nbsp;{"text":"<em>很多人以为喝杯咖啡…</em>"},</p><p>&nbsp;…]}</p></div></div></div>`;
+}
+
+function stats(){
+  const ok=METHODS.filter(m=>m.status==="ok").length;
+  $("#stats").innerHTML=`<div class="stat"><b>${METHODS.length}</b><span>收录方法</span></div><div class="stat"><b>${ok}</b><span>已验证</span></div><div class="stat"><b>${new Set(METHODS.flatMap(m=>m.plat)).size}</b><span>涉及平台</span></div>`;
+}
+
+function chips(el,list,key){
+  const all=`<button class="chip" aria-pressed="${state[key]===null}" data-v="">全部</button>`;
+  el.innerHTML=all+list.map(v=>{const n=METHODS.filter(m=>m[key].includes(v)).length;return `<button class="chip" aria-pressed="${state[key]===v}" data-v="${esc(v)}">${esc(v)}<span class="n">${n}</span></button>`}).join("");
+  el.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;state[key]=b.dataset.v||null;render()};
+}
+
+function render(){
+  chips($("#fuse"),USES,"use");chips($("#fplat"),PLATS,"plat");
+  const q=state.q.trim().toLowerCase();
+  const list=METHODS.filter(m=>(!state.use||m.use.includes(state.use))&&(!state.plat||m.plat.includes(state.plat))&&(!q||[m.id,m.name,m.oneline,m.desc,...m.plat,...m.use].join(" ").toLowerCase().includes(q)));
+  $("#count").textContent=`显示 ${list.length} / ${METHODS.length} 个方法`;
+  $("#grid").innerHTML=list.length?list.map(m=>`<article class="card">
+    <button class="open" data-id="${m.id}" aria-label="查看 ${esc(m.name)}">${preview(m)}
+      <div class="meta"><div class="row"><span class="id">${m.id}</span><span class="pill ${ST[m.status][1]}">${ST[m.status][0]}</span></div>
+      <div class="name">${esc(m.name)}</div><div class="oneline">${esc(m.oneline)}</div>
+      <div class="tags">${m.plat.map(p=>`<span class="tag plat">${esc(p)}</span>`).join("")}${m.use.map(u=>`<span class="tag">${esc(u)}</span>`).join("")}</div></div></button>
+    <div class="copies"><button class="copy" data-copy="${m.id}">复制接口链接</button></div></article>`).join(""):`<div class="empty">没有符合条件的方法，换个筛选试试</div>`;
+}
+
+async function copyText(text,btn,label){
+  try{await navigator.clipboard.writeText(text)}catch(e){
+    const t=document.createElement("textarea");t.value=text;t.style.position="fixed";t.style.left="-9999px";document.body.appendChild(t);t.select();try{document.execCommand("copy")}catch(_){}t.remove();
+  }
+  const old=btn.textContent;btn.textContent=label||"已复制";btn.classList.add("done");setTimeout(()=>{btn.textContent=old;btn.classList.remove("done")},1400);
+}
+
+/* 从抖音链接或纯数字里取出视频 ID */
+function pickId(s){
+  s=String(s||"").trim();
+  const m=s.match(/(?:video|note)\/(\d{15,22})/)||s.match(/[?&](?:item_id|modal_id|vid)=(\d{15,22})/)||s.match(/\b(\d{15,22})\b/);
+  return m?m[1]:null;
+}
+
+/* 从星图返回的原始数据里取出每句 text，拼成逐字稿 */
+function cleanTranscript(raw){
+  raw=String(raw||"").trim();if(!raw)return {err:"先把页面上的那串文字粘进来"};
+  let lines=[];
+  try{
+    const data=JSON.parse(raw);
+    const walk=(v,inTexts)=>{
+      if(Array.isArray(v))v.forEach(x=>walk(x,inTexts));
+      else if(v&&typeof v==="object")for(const k in v){
+        if(k==="text"&&typeof v[k]==="string")lines.push(v[k]);
+        else walk(v[k],inTexts||k==="texts");
+      }
+    };
+    walk(data,false);
+    const hasTexts=/"texts"\s*:\s*\[\s*\]/.test(raw);
+    if(!lines.length)return {err:hasTexts?"返回的是 \"texts\":[]，星图没有这条视频的文字稿":"没找到 \"text\" 字段，确认粘的是接口页面的完整内容"};
+  }catch(e){
+    const re=/"text"\s*:\s*"((?:[^"\\]|\\.)*)"/g;let m;
+    while((m=re.exec(raw)))try{lines.push(JSON.parse('"'+m[1]+'"'))}catch(_){lines.push(m[1])}
+    if(!lines.length)return {err:"看不懂这段内容。从接口页面全选（⌘A）再复制过来试试"};
+  }
+  lines=lines.map(s=>s.trim()).filter(Boolean);
+  return {text:lines.join("\n"),n:lines.length,chars:lines.join("").length};
+}
+
+function toolXingtu(m){
+  return `<div class="sec"><h3>链接生成器</h3><div class="tool">
+      <label for="vidIn">抖音视频链接或视频 ID</label>
+      <input id="vidIn" class="inp" value="${m.example}" placeholder="例：https://www.douyin.com/video/7662336362532304484">
+      <div class="out" id="vidOut"></div>
+      <div class="btns"><button class="btn" id="vidCopy">复制链接</button><a class="btn ghost" id="vidOpen" target="_blank" rel="noopener">在新标签页打开</a></div>
+      <p class="hint">打开前先确认这个浏览器已经登录了星图。</p></div></div>
+    <div class="sec"><h3>逐字稿整理器</h3><div class="tool">
+      <label for="rawIn">把接口页面上的那串文字整段粘进来</label>
+      <textarea id="rawIn" class="inp">{"code":0,"data":{"texts":[{"text":"今天聊聊熬夜之后，"},{"text":"喝一杯咖啡到底能不能补回来。"},{"text":"很多人以为咖啡能把觉补上，"},{"text":"其实它只是让你暂时感觉不到困。"}]}}</textarea>
+      <p class="hint">框里现在是示例数据，换成你自己粘的内容就行。</p>
+      <div class="out txt" id="rawOut"></div>
+      <div class="btns"><button class="btn" id="rawCopy">复制逐字稿</button><button class="btn ghost" id="rawClear">清空</button></div></div></div>`;
+}
+
+function bindXingtu(){
+  const vin=$("#vidIn"),vout=$("#vidOut"),vopen=$("#vidOpen"),vcopy=$("#vidCopy");
+  const upd=()=>{const id=pickId(vin.value);
+    if(id){vout.classList.remove("err");vout.innerHTML=esc(XT_API)+`<b style="color:var(--orange)">${id}</b>`;vopen.href=XT_API+id;vopen.removeAttribute("aria-disabled");vcopy.disabled=false}
+    else{vout.classList.add("err");vout.textContent=vin.value.trim()?"没认出视频 ID：抖音链接里 /video/ 后面应该有一串 19 位数字":"粘一条抖音链接或视频 ID";vopen.removeAttribute("href");vopen.setAttribute("aria-disabled","true");vcopy.disabled=true}};
+  vin.oninput=upd;upd();
+  vcopy.onclick=()=>{const id=pickId(vin.value);if(id)copyText(XT_API+id,vcopy)};
+  const rin=$("#rawIn"),rout=$("#rawOut"),rcopy=$("#rawCopy");
+  const run=()=>{const r=cleanTranscript(rin.value);
+    if(r.err){rout.classList.add("err");rout.textContent=r.err;rcopy.disabled=true}
+    else{rout.classList.remove("err");rout.textContent=r.text;rcopy.disabled=false;rcopy.dataset.n=`${r.n} 句 · ${r.chars} 字`;rcopy.textContent=`复制逐字稿（${r.n} 句 · ${r.chars} 字）`}};
+  rin.oninput=run;run();
+  rcopy.onclick=()=>{const r=cleanTranscript(rin.value);if(r.text)copyText(r.text,rcopy)};
+  $("#rawClear").onclick=()=>{rin.value="";run();rin.focus()};
+}
+
+let lastFocus=null;
+function openPanel(id){
+  const m=METHODS.find(x=>x.id===id);if(!m)return;
+  lastFocus=document.activeElement;
+  const urlbox=`<div class="urlbox">${esc(XT_API)}<mark>${m.example}</mark></div>`;
+  $("#panel").innerHTML=`<div class="ph"><span class="id">${m.id} · <span class="pill ${ST[m.status][1]}">${ST[m.status][0]}</span></span><button class="x-btn" id="close">关闭</button></div>
+    ${preview(m).replace('class="stage"','class="stage" style="border-radius:12px;border:1px solid var(--stage-line)"')}
+    <h2 id="pTitle">${esc(m.name)}</h2><p class="desc">${esc(m.desc)}</p>
+    <div class="sec"><h3>基本信息</h3><dl class="kv"><dt>用途</dt><dd>${m.use.join("、")}</dd><dt>平台</dt><dd>${m.plat.join("、")}</dd><dt>要准备</dt><dd>${esc(m.need)}</dd><dt>耗时</dt><dd>${esc(m.cost)}</dd><dt>验证</dt><dd>${esc(m.verified)}</dd><dt>来源</dt><dd>${esc(m.src)}</dd></dl></div>
+    <div class="sec"><h3>操作步骤</h3><ol class="how">${m.how.map((h,i)=>`<li><div>${h}${i===1?urlbox+`<div class="btns" style="margin-top:8px"><button class="btn ghost" id="copyTpl">复制这个链接</button></div><p class="hint" style="font-size:12.5px;color:var(--muted);margin:6px 0 0">黄色那段是示例 ID，换成你要查的视频。</p>`:""}</div></li>`).join("")}</ol></div>
+    ${m.tool==="xingtu"?toolXingtu(m):""}
+    <div class="sec"><h3>注意事项</h3><ul class="note">${m.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`;
+  $("#scrim").hidden=false;$("#panel").hidden=false;document.body.style.overflow="hidden";
+  $("#close").onclick=closePanel;
+  $("#copyTpl").onclick=e=>copyText(XT_API+m.example,e.currentTarget);
+  if(m.tool==="xingtu")bindXingtu();
+  $("#panel").scrollTop=0;$("#close").focus();
+  try{history.replaceState(null,"","#"+m.id)}catch(_){}
+}
+function closePanel(){
+  $("#scrim").hidden=true;$("#panel").hidden=true;document.body.style.overflow="";
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(_){}
+  if(lastFocus)lastFocus.focus();
+}
+
+$("#grid").addEventListener("click",e=>{
+  const c=e.target.closest(".copy");if(c){const m=METHODS.find(x=>x.id===c.dataset.copy);copyText(XT_API+m.example,c);return}
+  const o=e.target.closest(".open");if(o)openPanel(o.dataset.id);
+});
+$("#scrim").onclick=closePanel;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#panel").hidden)closePanel()});
+$("#q").oninput=e=>{state.q=e.target.value;render()};
+stats();render();
+const h=location.hash.slice(1);if(h&&METHODS.some(m=>m.id===h))openPanel(h);
+</script>
