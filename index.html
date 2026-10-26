@@ -184,8 +184,8 @@ footer{margin-top:28px;font-size:12.5px;color:var(--muted)}
 <aside class="panel" id="panel" hidden role="dialog" aria-modal="true" aria-labelledby="pTitle"></aside>
 
 <script>
-const USES=["拿逐字稿","找选题","写脚本","剪辑","数据分析"];
-const PLATS=["巨量星图","抖音","剪映","Claude"];
+const USES=["拿逐字稿","下载素材","找选题","写脚本","剪辑","数据分析"];
+const PLATS=["巨量星图","抖音","小宇宙","剪映","Claude"];
 const ST={ok:["已验证","st-ok"],try:["试用中","st-try"]};
 const XT_API="https://www.xingtu.cn/gw/api/aggregator/get_item_high_quality_text?item_id=";
 
@@ -208,7 +208,31 @@ const METHODS=[
    "页面显示的是带格式符号的原始数据，读起来乱，复制下来用下面的整理器转成干净文字",
    "要一次处理几十条（比如批量写进飞书表格），交给 Claude 批量跑更省事，不用一条条手动开"
   ],
-  src:"和 Claude 一起摸索出来的（做选题入库表时）",tool:"xingtu"}
+  src:"和 Claude 一起摸索出来的（做选题入库表时）",tool:"xingtu"},
+ {id:"M-002",name:"小宇宙播客导出原始音频（m4a/mp3）",use:["下载素材","拿逐字稿"],plat:["小宇宙"],status:"try",
+  oneline:"在电脑上打开单集网页的源代码，搜 xyzcdn 找到音频直链，打开就能下载原始音频。",
+  cost:"每集约 1 分钟",need:"电脑浏览器；要导出的小宇宙单集链接（只限公开免费节目）",
+  verified:"整理入库，还没用真实单集跑过一遍",
+  desc:"拆播客、做逐字稿时，需要拿到节目的原始音频。小宇宙 App 里的「下载离线」是加密缓存，拿不出来；单集网页的源代码里有一条 media.xyzcdn.net 的音频直链，复制出来就能直接下载。",
+  how:[
+   "在小宇宙打开这一期 → 点右上角分享 → 复制链接，长这样：<code>https://www.xiaoyuzhoufm.com/episode/xxxxxx</code>",
+   "在电脑浏览器里打开这个链接，进入网页版单集。",
+   "打开网页源代码：Mac 按 <code>⌘ ⌥ U</code>，Windows 按 <code>Ctrl U</code>。",
+   "在源代码页按 <code>⌘ F</code> / <code>Ctrl F</code>，搜 <code>xyzcdn</code>，搜不到再试 <code>.m4a</code> 或 <code>og:audio</code>。",
+   "找到一长串 <code>https://media.xyzcdn.net/……m4a</code>，复制下来（也可以全选源代码粘进下面的提取器）。",
+   "新开一个标签页粘贴这个链接，打开后右键「存储为」或点下载，就拿到音频了。"
+  ],
+  example:"xyzcdn",
+  notes:[
+   "只限公开免费节目。付费、会员专属、加密的单集基本拿不到，解析出来是空的或打开是 404",
+   "下载只做个人备份和拆解，不要二次传播，尊重主播版权",
+   "App 里的「下载离线」是加密缓存，和这个方法完全两码事，不能拿来导出",
+   "大部分是 m4a 格式，播放器都能直接放，不用转；一定要 mp3 就用剪映或格式工厂转",
+   "手机没法看源代码：可以先试在线解析站（比如 xyzdownloader.xyz，粘链接点解析），但这类站经常挂、广告多，重要节目还是发到电脑上用源代码提取",
+   "电脑上也可以装音频嗅探插件（比如 Audio Downloader Prime），播放时自动识别音频，一键下载",
+   "拿到音频后丢进通义听悟或飞书妙记，就能生成逐字稿"
+  ],
+  src:"自己整理的教程",tool:"xyz"}
 ];
 
 const $=s=>document.querySelector(s);
@@ -216,6 +240,8 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const state={use:null,plat:null,q:""};
 
 function preview(m){
+  if(m.tool==="xyz")return `<div class="stage" aria-hidden="true"><div class="win"><div class="chrome"><i></i><i></i><i></i><div class="url"><span>view-source:xiaoyuzhoufm.com/episode/<b>…</b></span></div></div>
+    <div class="body"><p>&lt;meta property="og:audio"</p><p>&nbsp;content="<em>https://media.xyzcdn.net/…</em>"</p><p>&nbsp;<em>….m4a</em>"&gt;</p><p>&lt;/head&gt;</p></div></div></div>`;
   return `<div class="stage" aria-hidden="true"><div class="win"><div class="chrome"><i></i><i></i><i></i><div class="url"><span>xingtu.cn/…/get_item_high_quality_text?item_id=<b>${m.example}</b></span></div></div>
     <div class="body"><p>{"texts":[</p><p>&nbsp;{"text":"<em>今天聊聊熬夜之后…</em>"},</p><p>&nbsp;{"text":"<em>很多人以为喝杯咖啡…</em>"},</p><p>&nbsp;…]}</p></div></div></div>`;
 }
@@ -241,7 +267,7 @@ function render(){
       <div class="meta"><div class="row"><span class="id">${m.id}</span><span class="pill ${ST[m.status][1]}">${ST[m.status][0]}</span></div>
       <div class="name">${esc(m.name)}</div><div class="oneline">${esc(m.oneline)}</div>
       <div class="tags">${m.plat.map(p=>`<span class="tag plat">${esc(p)}</span>`).join("")}${m.use.map(u=>`<span class="tag">${esc(u)}</span>`).join("")}</div></div></button>
-    <div class="copies"><button class="copy" data-copy="${m.id}">复制接口链接</button></div></article>`).join(""):`<div class="empty">没有符合条件的方法，换个筛选试试</div>`;
+    <div class="copies"><button class="copy" data-copy="${m.id}">${m.tool==="xyz"?"复制搜索关键词":"复制接口链接"}</button></div></article>`).join(""):`<div class="empty">没有符合条件的方法，换个筛选试试</div>`;
 }
 
 async function copyText(text,btn,label){
@@ -314,6 +340,37 @@ function bindXingtu(){
   $("#rawClear").onclick=()=>{rin.value="";run();rin.focus()};
 }
 
+/* 从小宇宙单集网页源代码里找出音频直链 */
+function pickAudio(raw){
+  raw=String(raw||"");if(!raw.trim())return {err:"先把网页源代码整段粘进来"};
+  const found=[...new Set((raw.replace(/\\u002F/gi,"/").replace(/\\\//g,"/").match(/https?:\/\/[a-z0-9.-]*xyzcdn\.net\/[^\s"'<>\\]+?\.(?:m4a|mp3|aac)(?:\?[^\s"'<>\\]*)?/gi))||[])];
+  if(found.length)return {urls:found};
+  if(/xiaoyuzhoufm\.com\/episode\//.test(raw)&&raw.length<300)return {err:"这是单集链接，不是源代码。先在浏览器打开它，再按 ⌘⌥U 看源代码，全选复制过来"};
+  return {err:"没找到 xyzcdn 音频链接。可能是付费或加密节目，或者粘的不是完整源代码"};
+}
+
+function toolXyz(){
+  return `<div class="sec"><h3>音频链接提取器</h3><div class="tool">
+      <label for="srcIn">把单集网页的源代码整段粘进来（⌘A 全选再复制）</label>
+      <textarea id="srcIn" class="inp">&lt;meta property="og:audio" content="https://media.xyzcdn.net/示例/episode-demo.m4a"&gt;</textarea>
+      <p class="hint">框里现在是示例，换成你自己复制的源代码就行。</p>
+      <div class="out" id="srcOut"></div>
+      <div class="btns"><button class="btn" id="srcCopy">复制音频链接</button><a class="btn ghost" id="srcOpen" target="_blank" rel="noopener">在新标签页打开</a><button class="btn ghost" id="srcClear">清空</button></div></div></div>`;
+}
+
+function bindXyz(){
+  const sin=$("#srcIn"),sout=$("#srcOut"),scopy=$("#srcCopy"),sopen=$("#srcOpen");
+  const run=()=>{const r=pickAudio(sin.value);
+    if(r.err){sout.classList.add("err");sout.textContent=r.err;scopy.disabled=true;sopen.removeAttribute("href");sopen.setAttribute("aria-disabled","true")}
+    else{sout.classList.remove("err");sout.innerHTML=r.urls.map(esc).join("<br>")+(r.urls.length>1?`<br><span style="color:var(--muted)">找到 ${r.urls.length} 条，一般第一条就是本集</span>`:"");scopy.disabled=false;sopen.href=r.urls[0];sopen.removeAttribute("aria-disabled")}};
+  sin.oninput=run;run();
+  scopy.onclick=()=>{const r=pickAudio(sin.value);if(r.urls)copyText(r.urls[0],scopy)};
+  $("#srcClear").onclick=()=>{sin.value="";run();sin.focus()};
+}
+
+/* 卡片和详情里“复制”按钮拿的内容 */
+const copyValue=m=>m.tool==="xyz"?"xyzcdn":XT_API+m.example;
+
 let lastFocus=null;
 function openPanel(id){
   const m=METHODS.find(x=>x.id===id);if(!m)return;
@@ -323,13 +380,14 @@ function openPanel(id){
     ${preview(m).replace('class="stage"','class="stage" style="border-radius:12px;border:1px solid var(--stage-line)"')}
     <h2 id="pTitle">${esc(m.name)}</h2><p class="desc">${esc(m.desc)}</p>
     <div class="sec"><h3>基本信息</h3><dl class="kv"><dt>用途</dt><dd>${m.use.join("、")}</dd><dt>平台</dt><dd>${m.plat.join("、")}</dd><dt>要准备</dt><dd>${esc(m.need)}</dd><dt>耗时</dt><dd>${esc(m.cost)}</dd><dt>验证</dt><dd>${esc(m.verified)}</dd><dt>来源</dt><dd>${esc(m.src)}</dd></dl></div>
-    <div class="sec"><h3>操作步骤</h3><ol class="how">${m.how.map((h,i)=>`<li><div>${h}${i===1?urlbox+`<div class="btns" style="margin-top:8px"><button class="btn ghost" id="copyTpl">复制这个链接</button></div><p class="hint" style="font-size:12.5px;color:var(--muted);margin:6px 0 0">黄色那段是示例 ID，换成你要查的视频。</p>`:""}</div></li>`).join("")}</ol></div>
-    ${m.tool==="xingtu"?toolXingtu(m):""}
+    <div class="sec"><h3>操作步骤</h3><ol class="how">${m.how.map((h,i)=>`<li><div>${h}${i===1&&m.tool==="xingtu"?urlbox+`<div class="btns" style="margin-top:8px"><button class="btn ghost" id="copyTpl">复制这个链接</button></div><p class="hint" style="font-size:12.5px;color:var(--muted);margin:6px 0 0">黄色那段是示例 ID，换成你要查的视频。</p>`:""}</div></li>`).join("")}</ol></div>
+    ${m.tool==="xingtu"?toolXingtu(m):m.tool==="xyz"?toolXyz():""}
     <div class="sec"><h3>注意事项</h3><ul class="note">${m.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`;
   $("#scrim").hidden=false;$("#panel").hidden=false;document.body.style.overflow="hidden";
   $("#close").onclick=closePanel;
-  $("#copyTpl").onclick=e=>copyText(XT_API+m.example,e.currentTarget);
+  if($("#copyTpl"))$("#copyTpl").onclick=e=>copyText(XT_API+m.example,e.currentTarget);
   if(m.tool==="xingtu")bindXingtu();
+  if(m.tool==="xyz")bindXyz();
   $("#panel").scrollTop=0;$("#close").focus();
   try{history.replaceState(null,"","#"+m.id)}catch(_){}
 }
@@ -340,7 +398,7 @@ function closePanel(){
 }
 
 $("#grid").addEventListener("click",e=>{
-  const c=e.target.closest(".copy");if(c){const m=METHODS.find(x=>x.id===c.dataset.copy);copyText(XT_API+m.example,c);return}
+  const c=e.target.closest(".copy");if(c){const m=METHODS.find(x=>x.id===c.dataset.copy);copyText(copyValue(m),c);return}
   const o=e.target.closest(".open");if(o)openPanel(o.dataset.id);
 });
 $("#scrim").onclick=closePanel;
